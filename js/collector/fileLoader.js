@@ -1,5 +1,5 @@
 import {unpack} from '../core/crypto.js';
-import {put,get,clear,putMany} from '../core/db.js';
+import {put,clear,putMany} from '../core/db.js';
 import {cmpNum} from '../core/utils.js';
 import {getBin} from './unlock.js';
 const inRoute=(r,rt)=>r.sector===rt.sector&&cmpNum([r.blk,r.bld,r.apt],rt.from)>=0&&cmpNum([r.blk,r.bld,r.apt],rt.to)<=0;
@@ -17,8 +17,6 @@ export async function fetchNew(a,say=()=>{}){
 export async function commit(n){
   await clear('subscribers');await putMany('subscribers',n.pairs);await putMany('namesDirectory',n.names);
   await put('meta','file',{cycle:n.full.cycle,created:n.full.created,loaded:new Date().toISOString(),routes:n.routes,buttons:n.buttons});
-  const per={};n.pairs.forEach(([,r])=>{if(r.inRoute)per[r.sector]=(per[r.sector]||0)+r.value;});
-  if(!(await get('snapshot',n.full.cycle)))await put('snapshot',n.full.cycle,{cycle:n.full.cycle,per,at:new Date().toISOString()});
   try{await put('meta','ver',await (await fetch('version.json',{cache:'no-store'})).json());}catch{}
 }
 export async function loadFiles(a,say,hook){const n=await fetchNew(a,say);if(hook)await hook(n);await commit(n);return n.pairs.length;}
